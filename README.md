@@ -1,1 +1,1 @@
-# DeepImageClassification
+# Deep Image Classification
