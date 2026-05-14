@@ -33,8 +33,8 @@ from prediction.test import*
 from architecture.CNN import*
 from architecture.networks import*
 from plottings.plotting import*
-from data_utils.dataspliter import*
-from func_utils.get_annotation import*
+# from data_utils.dataspliter import*
+# from func_utils.get_annotation import*
 # from func_utils.performance_funcs import*
 # from func_utils.hyperparameter_search import*
 from data_utils.get_custom_datasetloader import*
@@ -55,7 +55,7 @@ def str_to_class(str):
 
 def main_func(args):
     print('Current directory: ', os.getcwd())
-
+    
     # Reading command line arguments into parser.
     parser = argparse.ArgumentParser(description = "Glaucoma prediction via classification.")
 
@@ -66,15 +66,23 @@ def main_func(args):
     # parser.add_argument("--pSaving_res", dest="save_dir_res", type=str, default='/Volumes/homa/Homa/Glaucoma_prediction/Real_World_Data_paper/GL_classification/IODA_IODA/prediction/results/') #'/Users/homai/Desktop/mntpoint/Projects/homa/Glaucoma_prediction/entire_images/results/7.grayScale/'
     # parser.add_argument("--ptsne_dir", dest="tsne_dir", type=str, default='/Volumes/homa/Homa/Glaucoma_prediction/Real_World_Data_paper/RW_data_inventory/tsne/original_1/RWD/') 
     
-    parser.add_argument("--pAnnot", dest="annot_dir", type=str, default='../../saveDir/dataset/') #  '../../data/'   #  '../../train_test_val_dirs' 
-    parser.add_argument("--pSaving_model", dest="save_dir_modl", type=str, default='../../saveDir/prediction/models/') 
-    parser.add_argument("--pSaving_res", dest="save_dir_res", type=str, default='../../saveDir/prediction/results/') 
+    parser.add_argument("--pAnnot", dest="annot_dir", type=str, default='../data/Refuge/') #  '../../data/'   #  '../../train_test_val_dirs' 
+    parser.add_argument("--pSaving_model", dest="save_dir_modl", type=str, default='../output/prediction/models/') 
+    parser.add_argument("--pSaving_res", dest="save_dir_res", type=str, default='../output/prediction/results/') 
+    parser.add_argument("--ptsne_dir", dest="tsne_dir", type=str, default='../tsne/') 
+    
+
+
+
+    # parser.add_argument("--pAnnot", dest="annot_dir", type=str, default='../../saveDir/dataset/') #  '../../data/'   #  '../../train_test_val_dirs' 
+    # parser.add_argument("--pSaving_model", dest="save_dir_modl", type=str, default='../../saveDir/prediction/models/') 
+    # parser.add_argument("--pSaving_res", dest="save_dir_res", type=str, default='../../saveDir/prediction/results/') 
     # parser.add_argument("--ptsne_dir", dest="tsne_dir", type=str, default='../../tsne/') 
     
     parser.add_argument("--lr", dest="lr", type=np.float32, default=1e-4) #
     parser.add_argument("--num_epochs", dest="num_epochs", type=int, default=2000) #
     parser.add_argument("--early_stopping", dest="early_stopping", type=int, default=500)
-    parser.add_argument("--image_resize", dest="img_size", type=int, default=128)
+    parser.add_argument("--image_resize", dest="img_size", type=int, default=128)  ## 224 ?
     
     parser.add_argument("--bs_train", dest="batch_size_train", type=int, default=32)
     parser.add_argument("--bs_valid", dest="batch_size_valid", type=int, default=200)
@@ -88,8 +96,8 @@ def main_func(args):
     parser.add_argument("--augmnt", dest="augnment", action='store_true') 
     parser.add_argument("--weight_decay", dest="weight_decay", type=np.float32, default=1e-4) 
 
-    parser.add_argument("--validation_ratio", dest="val_Ratio", type=np.float32, default=0.1)   
-    parser.add_argument("--test_ratio", dest="test_Ratio", type=np.float32, default=0.18)    
+    parser.add_argument("--validation_ratio", dest="val_Ratio", type=np.float32, default=0.1)    ####
+    parser.add_argument("--test_ratio", dest="test_Ratio", type=np.float32, default=0.1)         ####
     
     # -------------- If you are using "repeat_train_data", ENSURE to USE augmentation
     parser.add_argument("--repeat_train_batch", dest="repeat_train_data", type=int, default=3)
@@ -110,7 +118,7 @@ def main_func(args):
     # Creating Parser Object
     opts = parser.parse_args(args[1:])
     print('Saving directory = ' , opts.save_dir_res, '!')
-    
+ 
   # # ------------------------ split data into train/val/test sets
     # train_annotations, val_annotations, test_annotations = Data_splitter(opts)
     # save_resized_DataInFile(train_annotations, opts.annot_dir+'train', 512)
@@ -130,21 +138,21 @@ def main_func(args):
   
     # dataloaders = get_dataloaders_test_needFolders(opts)  
     if opts.phase =='test':
-        dataloaders = get_dataloaders_test_needFolders(opts)
-        # dataloaders = get_dataloaders_test(opts)
+        # dataloaders = get_dataloaders_test_needFolders(opts)
+        dataloaders = get_dataloaders_test(opts)
     else:
-        dataloaders= get_dataloaders_needFolders(opts)
-        # dataloaders= get_dataloaders(opts)
+        # dataloaders= get_dataloaders_needFolders(opts)
+        dataloaders= get_dataloaders(opts)
     
     
     if opts.grayScale:
         in_channels = 1
     print('in_channels: ================== ', in_channels)    
-
+    
     # ------------------------ init models
     net_archit = str_to_class(opts.net_archit)
     net = net_archit(in_channels=in_channels, out_features=num_classes); #print(net)
-  
+
     # net = networks.densenet121(in_channels=in_channels, out_features= num_classes); print(net)
 
     # ----------------------- get output file name
@@ -153,6 +161,7 @@ def main_func(args):
     # ----------------------- get metrics      
     metrics = {'accuracy_py': accuracy_score, 'sensitivity':recall_score, 'precision':precision_score, 'f1_score': f1_score, 'auroc': roc_auc_score} #  'auroc': roc_auc_score
     
+
     # ----------------------- loss function and optimizer
     # criterion = torch.nn.BCELoss()
     criterion = nn.CrossEntropyLoss()  
@@ -191,6 +200,7 @@ def main_func(args):
     
        net_archit = str_to_class(opts.net_archit)
        net = net_archit(in_channels=in_channels, out_features=num_classes); print(net)
+ 
   
        # net = resNet50(250, num_classes, pretrained=True, changing=False)
        # net = networks.densenet121(in_channels=in_channels, out_features=num_classes)

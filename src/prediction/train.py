@@ -68,14 +68,16 @@ def train_validation_phase(dataloaders, model, model_name, criterion, optimizer,
 
     start_time = time.time()
 
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu"); print(device)
-
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu"); print(device)    
+ 
     if loading_model:
         print('========= In '+argpars.phase+': Loading model: '+ model_name+' =========')
         model = call_load_model(model, argpars.save_dir_modl+model_name)
         # model.load_state_dict(torch.load(argpars.save_dir_modl+model_name))
     
+     
     for epoch in range(argpars.num_epochs):
+        stime=time.time()
         print("\nEpoch {}/{}: ".format(epoch+1, argpars.num_epochs), end=""); print('\n')
         
         batch_summary = {a: [] for a in field_names}
@@ -92,8 +94,10 @@ def train_validation_phase(dataloaders, model, model_name, criterion, optimizer,
             inputs_size = 0
             i =0
             
+            stime_1=time.time()
             for inputs, targets in dataloaders[phase]:
                 i = i +1
+
                 
                 # ------------------- moving data to gpu, if available
                 if torch.cuda.is_available():
@@ -132,6 +136,8 @@ def train_validation_phase(dataloaders, model, model_name, criterion, optimizer,
                         loss.backward()
                         optimizer.step()
 
+                print("i=",i, " phase=", phase, "  time=", time.time()-stime_1)    
+
                 # ------------------- batch loss and accuracy
                 batch_loss += loss.item() * inputs.size(0)
                 batch_accuracy += accuracy(y_pred, targets.cpu()) #torch.sum(torch.max(outputs, dim=1)[1] == targets).item()
@@ -160,7 +166,7 @@ def train_validation_phase(dataloaders, model, model_name, criterion, optimizer,
                 
                 if epoch % 200 == 0:
                     utils.save_model(best_model_wts, argpars.save_dir_modl+model_name)
-                # torch.save(best_model_wts, argpars.save_dir_modl+model_name)    # change line 155 to best_model_wts = copy.deepcopy(model.state_dict()): Saving the trained model parameters 
+                torch.save(best_model_wts, argpars.save_dir_modl+model_name)    # change line 155 to best_model_wts = copy.deepcopy(model.state_dict()): Saving the trained model parameters 
 
             elif phase == "val" and not (epoch_accuracy > best_acc):
                 unimproved_epochs += 1
@@ -173,7 +179,7 @@ def train_validation_phase(dataloaders, model, model_name, criterion, optimizer,
                 val_accuracies.append(epoch_accuracy)
                 val_losses.append(epoch_loss)
                 
-            
+
         for field in field_names[5:]:
             batch_summary[field] = np.mean(batch_summary[field])      
         
@@ -203,7 +209,7 @@ def train_validation_phase(dataloaders, model, model_name, criterion, optimizer,
             
             # results.to_csv(argpars.save_dir_res+model_name+'.csv', sep=',', index=False)
 
-        if epoch % 200 == 0:
+        if epoch % 1 == 0:
             with open(argpars.save_dir_res+model_name+'_v2.csv', 'a', newline='') as csvfile:
                 writer = csv.DictWriter(csvfile, fieldnames=field_names)
                 writer.writerow(batch_summary)
@@ -214,6 +220,8 @@ def train_validation_phase(dataloaders, model, model_name, criterion, optimizer,
             return 0
         # unimproved_epochs += 1
         print('unimproved_epochs= ', unimproved_epochs)
+        print("Time=", time.time()-stime)
+        stio
 
     print(f"Time taken: {time.time() - start_time:.3f} seconds")
     print(f"Val: loss: {best_loss:.3f} acc: {best_acc:.3f}.")
@@ -223,7 +231,7 @@ def train_validation_phase(dataloaders, model, model_name, criterion, optimizer,
         writer = csv.DictWriter(csvfile, fieldnames=field_names)
         writer.writerow(batch_summary)
     utils.save_model(best_model_wts, argpars.save_dir_modl+model_name)
-    # save_model(best_model_wts, argpars.save_dir_modl, model_name)
+    save_model(best_model_wts, argpars.save_dir_modl, model_name)
 
 
 

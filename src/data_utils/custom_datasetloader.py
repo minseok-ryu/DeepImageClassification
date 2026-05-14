@@ -96,7 +96,7 @@ class CustomDataset(Dataset):
            # img = img.resize((self.img_size,self.img_size))         
 
         # img.thumbnail((256,256,3), Image.ANTIALIAS)
-       # img= img.resize((self.img_size,self.img_size)) # fig1 = plt.figure(); plt.imshow(img); plt.title('Resized image: '+str(img.size))
+       img= img.resize((self.img_size,self.img_size)) # fig1 = plt.figure(); plt.imshow(img); plt.title('Resized image: '+str(img.size))
        y_label = torch.tensor(int(self.annotations.loc[idx, 'label']))
        
        #--------------------------- preprocessing

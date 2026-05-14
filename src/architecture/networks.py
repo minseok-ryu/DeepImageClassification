@@ -20,7 +20,10 @@ def _cuda_enabled(model):
         model = model.cuda()
     if torch.cuda.device_count() > 1:
         print('========= nn.DataParallel is being used yay :) =========')
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model = model.to(device)
         model = nn.DataParallel(model)
+        print("#devices=",torch.cuda.device_count() )
     return model
 
 def mobilenet_v2(in_channels, out_features):
